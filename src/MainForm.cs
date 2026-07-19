@@ -24,6 +24,7 @@ namespace TinyTable
         private readonly ToolStripStatusLabel _status;
         private readonly bool _startedByWindows;
         private readonly System.Windows.Forms.Timer _autoSaveTimer;
+        private readonly System.Windows.Forms.Timer _listReloadTimer;
         private NotifyIcon _trayIcon;
         private List<DesktopIcon> _icons;
         private bool _refreshingChecks;
@@ -161,7 +162,7 @@ namespace TinyTable
             _iconList.Columns.Add("类型", 76);
             _iconList.Columns.Add("当前位置", 96);
             _iconList.Columns.Add("来源", 120);
-            _iconList.ItemChecked += OnIconItemChecked;
+            _iconList.ItemCheck += OnIconItemCheck;
             _iconList.ColumnClick += OnIconColumnClick;
             leftLayout.Controls.Add(_iconList, 0, 1);
 
@@ -223,6 +224,13 @@ namespace TinyTable
 
             _autoSaveTimer = new System.Windows.Forms.Timer();
             _autoSaveTimer.Tick += delegate { RunAutomaticSave("定时保存", false); };
+            _listReloadTimer = new System.Windows.Forms.Timer();
+            _listReloadTimer.Interval = 80;
+            _listReloadTimer.Tick += delegate
+            {
+                _listReloadTimer.Stop();
+                ReloadProtectedList();
+            };
             ConfigureAutomation();
             SystemEvents.SessionEnding += OnSessionEnding;
             SystemEvents.SessionSwitch += OnSessionSwitch;
@@ -945,12 +953,8 @@ namespace TinyTable
             try
             {
                 HashSet<string> checkedKeys = new HashSet<string>(
-                    _iconList.Items.Cast<ListViewItem>()
-                        .Where(x => x.Checked)
-                        .Select(x => ((DesktopIcon)x.Tag).Key),
+                    _database.ProtectedKeys ?? new List<string>(),
                     StringComparer.OrdinalIgnoreCase);
-                foreach (string key in _database.ProtectedKeys)
-                    checkedKeys.Add(key);
                 _icons = _desktop.ReadIcons();
                 _refreshingChecks = true;
                 _iconList.BeginUpdate();
@@ -1224,16 +1228,19 @@ namespace TinyTable
             _store.Save(_database);
         }
 
-        private void OnIconItemChecked(object sender, ItemCheckedEventArgs e)
+        private void OnIconItemCheck(object sender, ItemCheckEventArgs e)
         {
-            if (_refreshingChecks || e.Item == null || e.Item.Tag == null)
+            if (_refreshingChecks || e.Index < 0 || e.Index >= _iconList.Items.Count)
                 return;
-            DesktopIcon icon = (DesktopIcon)e.Item.Tag;
+            ListViewItem item = _iconList.Items[e.Index];
+            if (item.Tag == null)
+                return;
+            DesktopIcon icon = (DesktopIcon)item.Tag;
             try
             {
                 _selectionList.UpdateKeys(
                     new string[] { icon.Key },
-                    e.Item.Checked);
+                    e.NewValue == CheckState.Checked);
                 _database = _store.Load();
                 _selectionPreset.SelectedIndex = 0;
             }
@@ -1259,13 +1266,29 @@ namespace TinyTable
         private void ReloadProtectedList()
         {
             _database = _store.Load();
-            RefreshSnapshotList();
             RefreshSelectionPresets();
+            HashSet<string> protectedKeys = new HashSet<string>(
+                _database.ProtectedKeys ?? new List<string>(),
+                StringComparer.OrdinalIgnoreCase);
             _refreshingChecks = true;
-            _iconList.Items.Clear();
-            _refreshingChecks = false;
-            RefreshDesktop(null, EventArgs.Empty);
-            _status.Text = "已同步 Explorer 右键菜单修改的备份列表。";
+            _iconList.BeginUpdate();
+            try
+            {
+                foreach (ListViewItem item in _iconList.Items)
+                {
+                    DesktopIcon icon = item.Tag as DesktopIcon;
+                    item.Checked = icon != null
+                        && protectedKeys.Contains(icon.Key);
+                }
+            }
+            finally
+            {
+                _iconList.EndUpdate();
+                _refreshingChecks = false;
+            }
+            _selectionPreset.SelectedIndex = 0;
+            _status.Text = "已同步 Explorer 右键菜单修改的备份列表："
+                + protectedKeys.Count + " 项。";
         }
 
         private void SaveCheckedSnapshot(object sender, EventArgs e)
@@ -1745,6 +1768,8 @@ namespace TinyTable
                 SystemEvents.SessionSwitch -= OnSessionSwitch;
                 if (_autoSaveTimer != null)
                     _autoSaveTimer.Dispose();
+                if (_listReloadTimer != null)
+                    _listReloadTimer.Dispose();
                 if (_trayIcon != null)
                 {
                     _trayIcon.Visible = false;
@@ -1759,7 +1784,8 @@ namespace TinyTable
         {
             if (message.Msg == NativeMethods.WM_TINYTABLE_LIST_CHANGED)
             {
-                BeginInvoke(new Action(ReloadProtectedList));
+                _listReloadTimer.Stop();
+                _listReloadTimer.Start();
                 message.Result = IntPtr.Zero;
                 return;
             }

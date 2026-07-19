@@ -70,6 +70,9 @@ namespace TinyTable
             Add("清空前", "Before clear", "清除前");
             Add("自动保留", "Auto recovery", "自動保留");
             Add("当前选择已经是空的。", "The current selection is already empty.", "目前選擇已經是空的。");
+            Add("Windows 当前没有选中的桌面图标。",
+                "No desktop icons are currently selected in Windows.",
+                "Windows 目前沒有選取的桌面圖示。");
             Add("选择已清空；可从方案中恢复：", "Selection cleared; recover it from: ", "選擇已清除；可從方案中恢復：");
             Add("当前没有勾选项目，不能保存选择方案。", "No items are checked, so the selection set cannot be saved.", "目前沒有勾選項目，無法儲存選擇方案。");
             Add("已有同名方案，是否用当前选择覆盖它？", "A set with this name exists. Replace it with the current selection?", "已有同名方案，是否以目前選擇覆蓋？");

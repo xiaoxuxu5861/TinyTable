@@ -43,10 +43,12 @@ namespace TinyTable
                             if (current.Remove(key)) changed++;
                         }
                     }
-                    database.ProtectedKeys = current.OrderBy(x => x).ToList();
                     if (changed > 0)
+                    {
+                        database.ProtectedKeys = current.OrderBy(x => x).ToList();
                         database.ActiveSelectionPresetId = null;
-                    _store.Save(database);
+                        _store.Save(database);
+                    }
                     return changed;
                 }
                 finally

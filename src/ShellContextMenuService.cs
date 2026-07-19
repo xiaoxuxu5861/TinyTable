@@ -14,13 +14,13 @@ namespace TinyTable
             Localization.SetLanguage(database.AutomationSettings.LanguageCode);
             string executable = typeof(ShellContextMenuService).Assembly.Location;
             InstallVerb(FileRoot, "TinyTable.Add",
-                Localization.T("加入 TinyTable 备份列表"), "--add", executable);
+                Localization.T("加入 TinyTable 备份列表"), "--add-selected", executable);
             InstallVerb(FileRoot, "TinyTable.Remove",
-                Localization.T("从 TinyTable 备份列表移除"), "--remove", executable);
+                Localization.T("从 TinyTable 备份列表移除"), "--remove-selected", executable);
             InstallVerb(DirectoryRoot, "TinyTable.Add",
-                Localization.T("加入 TinyTable 备份列表"), "--add", executable);
+                Localization.T("加入 TinyTable 备份列表"), "--add-selected", executable);
             InstallVerb(DirectoryRoot, "TinyTable.Remove",
-                Localization.T("从 TinyTable 备份列表移除"), "--remove", executable);
+                Localization.T("从 TinyTable 备份列表移除"), "--remove-selected", executable);
             NativeMethods.SHChangeNotify(
                 NativeMethods.SHCNE_ASSOCCHANGED,
                 NativeMethods.SHCNF_IDLIST,
@@ -57,7 +57,7 @@ namespace TinyTable
                 {
                     command.SetValue(
                         null,
-                        "\"" + executable + "\" " + action + " %*");
+                        "\"" + executable + "\" " + action);
                 }
             }
         }

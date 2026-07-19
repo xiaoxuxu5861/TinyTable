@@ -153,6 +153,93 @@ namespace TinyTable
             return icons;
         }
 
+        public List<string> ReadSelectedKeys()
+        {
+            IntPtr listView = RequireDesktopListView();
+            int count = NativeMethods.SendMessage(
+                listView,
+                NativeMethods.LVM_GETITEMCOUNT,
+                IntPtr.Zero,
+                IntPtr.Zero).ToInt32();
+            Dictionary<string, List<PathCandidate>> paths =
+                BuildDisplayNamePathMap();
+            HashSet<string> usedPaths =
+                new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            Dictionary<string, int> keyCounts =
+                new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+            List<string> selectedKeys = new List<string>();
+
+            uint processId;
+            NativeMethods.GetWindowThreadProcessId(listView, out processId);
+            IntPtr process = NativeMethods.OpenProcess(
+                NativeMethods.PROCESS_VM_OPERATION |
+                NativeMethods.PROCESS_VM_READ |
+                NativeMethods.PROCESS_VM_WRITE |
+                NativeMethods.PROCESS_QUERY_INFORMATION,
+                false,
+                processId);
+            if (process == IntPtr.Zero)
+                throw new Win32Exception(
+                    Marshal.GetLastWin32Error(),
+                    "无法读取 Windows 桌面图标。");
+
+            int itemSize = Marshal.SizeOf(typeof(NativeMethods.LVITEM));
+            const int textChars = 520;
+            int allocationSize = itemSize + textChars * 2 + 32;
+            IntPtr remote = NativeMethods.VirtualAllocEx(
+                process,
+                IntPtr.Zero,
+                (UIntPtr)allocationSize,
+                NativeMethods.MEM_COMMIT | NativeMethods.MEM_RESERVE,
+                NativeMethods.PAGE_READWRITE);
+            if (remote == IntPtr.Zero)
+            {
+                NativeMethods.CloseHandle(process);
+                throw new Win32Exception(
+                    Marshal.GetLastWin32Error(),
+                    "无法分配桌面读取缓冲区。");
+            }
+
+            try
+            {
+                for (int index = 0; index < count; index++)
+                {
+                    ItemDetails details = ReadItemDetails(
+                        listView, process, remote, itemSize, textChars, index);
+                    string path = ResolvePath(
+                        details.DisplayName,
+                        details.ImageIndex,
+                        paths,
+                        usedPaths);
+                    string baseKey = BuildKey(details.DisplayName, path);
+                    int occurrence;
+                    keyCounts.TryGetValue(baseKey, out occurrence);
+                    occurrence++;
+                    keyCounts[baseKey] = occurrence;
+                    string key = occurrence == 1
+                        ? baseKey
+                        : baseKey + "#desktop-" + occurrence;
+
+                    bool selected = (NativeMethods.SendMessage(
+                        listView,
+                        NativeMethods.LVM_GETITEMSTATE,
+                        (IntPtr)index,
+                        (IntPtr)NativeMethods.LVIS_SELECTED).ToInt32()
+                        & NativeMethods.LVIS_SELECTED) != 0;
+                    if (selected)
+                        selectedKeys.Add(key);
+                }
+            }
+            finally
+            {
+                NativeMethods.VirtualFreeEx(
+                    process, remote, UIntPtr.Zero, NativeMethods.MEM_RELEASE);
+                NativeMethods.CloseHandle(process);
+            }
+
+            return selectedKeys;
+        }
+
         public IconPosition GetSpacing()
         {
             IntPtr listView = RequireDesktopListView();

@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Reflection;
 using System.Runtime.Serialization.Json;
+using System.Threading;
 
 namespace TinyTable
 {
@@ -11,6 +12,7 @@ namespace TinyTable
         private readonly string _path;
         private readonly bool _portable;
         private readonly object _sync = new object();
+        private const string DatabaseMutexName = @"Local\TinyTable.DatabaseWrite";
 
         public SnapshotStore()
         {
@@ -31,52 +33,71 @@ namespace TinyTable
 
         public SnapshotDatabase Load()
         {
-            lock (_sync)
+            using (Mutex mutex = new Mutex(false, DatabaseMutexName))
             {
+                bool acquired = WaitForMutex(mutex);
                 try
                 {
-                    if (!File.Exists(_path))
-                        return CreateEmptyDatabase();
-                    using (FileStream stream = File.OpenRead(_path))
+                    lock (_sync)
                     {
-                        DataContractJsonSerializer serializer =
-                            new DataContractJsonSerializer(typeof(SnapshotDatabase));
-                        SnapshotDatabase data = serializer.ReadObject(stream) as SnapshotDatabase;
-                        if (data == null)
-                            return CreateEmptyDatabase();
-                        if (data.Snapshots == null)
-                            data.Snapshots = new System.Collections.Generic.List<LayoutSnapshot>();
-                        if (data.ProtectedKeys == null)
-                            data.ProtectedKeys = new System.Collections.Generic.List<string>();
-                        if (data.SelectionPresets == null)
-                            data.SelectionPresets = new System.Collections.Generic.List<SelectionPreset>();
-                        foreach (SelectionPreset preset in data.SelectionPresets)
+                        try
                         {
-                            if (string.IsNullOrEmpty(preset.Id))
-                                preset.Id = Guid.NewGuid().ToString("N");
-                            if (preset.UpdatedUtc == DateTime.MinValue)
-                                preset.UpdatedUtc = DateTime.UtcNow;
-                            if (preset.Keys == null)
-                                preset.Keys = new System.Collections.Generic.List<string>();
+                            if (!File.Exists(_path))
+                                return CreateEmptyDatabase();
+                            using (FileStream stream = File.Open(
+                                _path, FileMode.Open, FileAccess.Read, FileShare.Read))
+                            {
+                                DataContractJsonSerializer serializer =
+                                    new DataContractJsonSerializer(typeof(SnapshotDatabase));
+                                SnapshotDatabase data = serializer.ReadObject(stream)
+                                    as SnapshotDatabase;
+                                return Normalize(data);
+                            }
                         }
-                        if (data.RestorePreferences == null)
-                            data.RestorePreferences = RestorePreferences.CreateDefault();
-                        if (data.RestorePreferences.TypeSorts == null
-                            || data.RestorePreferences.TypeSorts.Count == 0)
-                            data.RestorePreferences.TypeSorts =
-                                RestorePreferences.CreateDefault().TypeSorts;
-                        if (data.AutomationSettings == null)
-                            data.AutomationSettings = AutomationSettings.CreateDefault();
-                        if (string.IsNullOrEmpty(data.AutomationSettings.LanguageCode))
-                            data.AutomationSettings.LanguageCode = "zh-CN";
-                        return data;
+                        catch
+                        {
+                            return CreateEmptyDatabase();
+                        }
                     }
                 }
-                catch
+                finally
                 {
-                    return CreateEmptyDatabase();
+                    if (acquired)
+                        mutex.ReleaseMutex();
                 }
             }
+        }
+
+        private SnapshotDatabase Normalize(SnapshotDatabase data)
+        {
+            if (data == null)
+                return CreateEmptyDatabase();
+            if (data.Snapshots == null)
+                data.Snapshots = new System.Collections.Generic.List<LayoutSnapshot>();
+            if (data.ProtectedKeys == null)
+                data.ProtectedKeys = new System.Collections.Generic.List<string>();
+            if (data.SelectionPresets == null)
+                data.SelectionPresets = new System.Collections.Generic.List<SelectionPreset>();
+            foreach (SelectionPreset preset in data.SelectionPresets)
+            {
+                if (string.IsNullOrEmpty(preset.Id))
+                    preset.Id = Guid.NewGuid().ToString("N");
+                if (preset.UpdatedUtc == DateTime.MinValue)
+                    preset.UpdatedUtc = DateTime.UtcNow;
+                if (preset.Keys == null)
+                    preset.Keys = new System.Collections.Generic.List<string>();
+            }
+            if (data.RestorePreferences == null)
+                data.RestorePreferences = RestorePreferences.CreateDefault();
+            if (data.RestorePreferences.TypeSorts == null
+                || data.RestorePreferences.TypeSorts.Count == 0)
+                data.RestorePreferences.TypeSorts =
+                    RestorePreferences.CreateDefault().TypeSorts;
+            if (data.AutomationSettings == null)
+                data.AutomationSettings = AutomationSettings.CreateDefault();
+            if (string.IsNullOrEmpty(data.AutomationSettings.LanguageCode))
+                data.AutomationSettings.LanguageCode = "zh-CN";
+            return data;
         }
 
         private SnapshotDatabase CreateEmptyDatabase()
@@ -120,20 +141,56 @@ namespace TinyTable
 
         public void Save(SnapshotDatabase data)
         {
-            lock (_sync)
+            using (Mutex mutex = new Mutex(false, DatabaseMutexName))
             {
-                Directory.CreateDirectory(_folder);
-                string temp = _path + ".tmp";
-                using (FileStream stream = File.Create(temp))
+                bool acquired = WaitForMutex(mutex);
+                try
                 {
-                    DataContractJsonSerializer serializer =
-                        new DataContractJsonSerializer(typeof(SnapshotDatabase));
-                    serializer.WriteObject(stream, data);
+                    lock (_sync)
+                    {
+                        Directory.CreateDirectory(_folder);
+                        string temp = _path + "." + Guid.NewGuid().ToString("N") + ".tmp";
+                        try
+                        {
+                            using (FileStream stream = File.Create(temp))
+                            {
+                                DataContractJsonSerializer serializer =
+                                    new DataContractJsonSerializer(typeof(SnapshotDatabase));
+                                serializer.WriteObject(stream, data);
+                                stream.Flush(true);
+                            }
+                            if (File.Exists(_path))
+                                File.Replace(temp, _path, null);
+                            else
+                                File.Move(temp, _path);
+                        }
+                        finally
+                        {
+                            if (File.Exists(temp))
+                                File.Delete(temp);
+                        }
+                    }
                 }
-                if (File.Exists(_path))
-                    File.Replace(temp, _path, null);
-                else
-                    File.Move(temp, _path);
+                finally
+                {
+                    if (acquired)
+                        mutex.ReleaseMutex();
+                }
+            }
+        }
+
+        private static bool WaitForMutex(Mutex mutex)
+        {
+            try
+            {
+                if (!mutex.WaitOne(TimeSpan.FromSeconds(15)))
+                    throw new InvalidOperationException(
+                        "TinyTable 数据正在被其他操作使用，请稍后重试。");
+                return true;
+            }
+            catch (AbandonedMutexException)
+            {
+                return true;
             }
         }
     }

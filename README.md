@@ -69,7 +69,7 @@ TinyTable is not affiliated with DesktopOK or SoftwareOK.
 ### Highlights
 
 - Selective backup and restore of desktop icon coordinates
-- Explorer context-menu commands for adding or removing multiple tracked items
+- Explorer desktop context-menu commands read the current single or multi-selection directly, including shortcuts with launch arguments
 - Multi-select by type: folders, shortcuts, images, documents, and more
 - Reusable selection sets with automatic recovery records before clearing
 - Five policies for unprotected items: collision only, current order, file type, name, or date
