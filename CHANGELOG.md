@@ -1,5 +1,27 @@
 # TinyTable 更新日志 / Changelog
 
+## 未发布 / Unreleased
+
+### 中文
+
+- 新增可选的浏览器上传快捷方式收纳功能。
+- 检测 Chrome、Edge、Firefox、Brave、Vivaldi、Opera 等浏览器的标准打开文件窗口。
+- 文件选择期间临时收纳个人桌面和可访问的公共桌面 `.lnk/.url` 快捷方式。
+- 文件选择窗口关闭后自动归还快捷方式并恢复原桌面坐标。
+- 移动前持久化恢复日志，程序异常退出后可在下次启动时自动恢复。
+- 同名冲突时绝不覆盖文件；公共桌面权限不足时安全跳过。
+- 桌面启用自动排列时不执行收纳，避免其他图标发生位移。
+
+### English
+
+- Added an optional browser-upload shortcut shelter.
+- Detects standard Open File dialogs from Chrome, Edge, Firefox, Brave, Vivaldi, Opera, and similar browsers.
+- Temporarily shelters `.lnk/.url` shortcuts from the personal desktop and accessible public desktop while the picker is open.
+- Returns shortcuts and restores their desktop coordinates when the picker closes.
+- Persists a recovery journal before moving files so an interrupted operation can recover on the next launch.
+- Never overwrites name conflicts and safely skips public-desktop items without permission.
+- Does nothing while desktop auto-arrange is enabled, preventing other icons from shifting.
+
 ## 0.1.10 - 2026-07-19
 
 ### 中文

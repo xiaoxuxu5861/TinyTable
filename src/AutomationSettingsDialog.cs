@@ -12,6 +12,7 @@ namespace TinyTable
         private readonly CheckBox _startWithWindows;
         private readonly CheckBox _startMinimized;
         private readonly CheckBox _saveWindowPosition;
+        private readonly CheckBox _shelterBrowserUploadShortcuts;
         private readonly CheckBox _autoSaveEnabled;
         private readonly ComboBox _interval;
         private readonly CheckBox _onlyChanged;
@@ -89,13 +90,17 @@ namespace TinyTable
             _saveWindowPosition = AddCheck(resident,
                 "记住主窗口位置和大小", 305, current.SaveWindowPosition);
 
-            Label residentNote = AddNote(resident,
-                "关闭托盘功能时，“最小化到托盘”和“关闭到托盘”不会生效。", 355);
+            _shelterBrowserUploadShortcuts = AddCheck(resident,
+                "浏览器选择上传文件时临时收纳桌面快捷方式", 340,
+                current.ShelterShortcutsDuringBrowserUpload);
 
-            AddSectionTitle(resident, "界面语言", 400);
-            _language = AddCombo(resident, 175, 428, 220);
+            Label residentNote = AddNote(resident,
+                "实验：需关闭自动排列并保持 TinyTable 运行；选择窗口关闭后自动归还。", 375);
+
+            AddSectionTitle(resident, "界面语言", 420);
+            _language = AddCombo(resident, 175, 448, 220);
             _language.MaxDropDownItems = 16;
-            AddLabel(resident, "界面语言", 48, 434);
+            AddLabel(resident, "界面语言", 48, 454);
             foreach (LanguageInfo language in Localization.SupportedLanguages)
                 _language.Items.Add(new LanguageItem(
                     language.NativeName, language.Code));
@@ -249,6 +254,8 @@ namespace TinyTable
             result.StartWithWindows = _startWithWindows.Checked;
             result.StartMinimized = _startMinimized.Checked;
             result.SaveWindowPosition = _saveWindowPosition.Checked;
+            result.ShelterShortcutsDuringBrowserUpload =
+                _shelterBrowserUploadShortcuts.Checked;
             result.AutoSaveEnabled = _autoSaveEnabled.Checked;
             result.AutoSaveMinutes = ((ValueItem)_interval.SelectedItem).Value;
             result.OnlyWhenLayoutChanged = _onlyChanged.Checked;

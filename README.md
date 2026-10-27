@@ -24,6 +24,7 @@ TinyTable 与 DesktopOK、SoftwareOK 没有隶属或合作关系。
 - 缺失目标提示、恢复前自动备份与撤销
 - 桌面放不下时先询问，再决定是否移入溢出文件夹
 - 托盘常驻、开机启动、自动保存和自动恢复均可选
+- 可选：浏览器选择上传文件时临时收纳桌面 `.lnk/.url` 快捷方式，关闭选择窗口后归还并恢复位置
 - 18 种界面语言，切换后立即刷新
 - Installer 与 Portable 两种发布方式
 
@@ -35,6 +36,8 @@ TinyTable 与 DesktopOK、SoftwareOK 没有隶属或合作关系。
 4. 选择快照并点击“恢复”，再选择未保护项目的处理方式。
 
 TinyTable 只备份图标位置，不备份文件内容。除用户确认的溢出处理外，恢复操作不会移动真实文件。
+
+浏览器上传快捷方式收纳功能默认关闭，并且只在 TinyTable 保持运行、桌面“自动排列图标”已关闭时工作。移动前会写入恢复日志；异常退出后，TinyTable 会在下次启动时自动归还快捷方式。公共桌面中无权移动的快捷方式会被安全跳过。
 
 ### 数据位置
 
@@ -76,6 +79,7 @@ TinyTable is not affiliated with DesktopOK or SoftwareOK.
 - Missing-item prompts, automatic pre-restore backup, and undo
 - Confirmation before physical files are moved into an overflow folder
 - Optional tray mode, startup, automatic saving, and automatic restore
+- Optional temporary shelter for desktop `.lnk/.url` shortcuts while a browser file picker is open, followed by position restoration
 - 18 UI languages with immediate switching
 - Installer and portable distributions
 
@@ -87,6 +91,8 @@ TinyTable is not affiliated with DesktopOK or SoftwareOK.
 4. Select a snapshot, choose “Restore”, and pick a policy for unprotected items.
 
 TinyTable stores positions only; it does not back up file contents. Real files are moved only when the user explicitly confirms overflow handling.
+
+The browser-upload shortcut shelter is disabled by default. It works only while TinyTable is running and desktop auto-arrange is disabled. A recovery journal is written before files move, so shortcuts can be returned automatically after an abnormal exit. Public-desktop shortcuts without sufficient permission are skipped.
 
 ### Data locations
 

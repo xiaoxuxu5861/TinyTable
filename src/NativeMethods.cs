@@ -29,6 +29,7 @@ namespace TinyTable
         public const uint PAGE_READWRITE = 0x04;
 
         public delegate bool EnumWindowsProc(IntPtr hWnd, IntPtr lParam);
+        public delegate bool EnumChildProc(IntPtr hWnd, IntPtr lParam);
 
         [StructLayout(LayoutKind.Sequential)]
         public struct POINT
@@ -95,6 +96,21 @@ namespace TinyTable
 
         [DllImport("user32.dll")]
         public static extern bool EnumWindows(EnumWindowsProc callback, IntPtr lParam);
+
+        [DllImport("user32.dll")]
+        public static extern bool EnumChildWindows(
+            IntPtr parent, EnumChildProc callback, IntPtr lParam);
+
+        [DllImport("user32.dll")]
+        public static extern bool IsWindowVisible(IntPtr hWnd);
+
+        [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+        public static extern int GetClassName(
+            IntPtr hWnd, StringBuilder className, int maxCount);
+
+        [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+        public static extern int GetWindowText(
+            IntPtr hWnd, StringBuilder text, int maxCount);
 
         [DllImport("user32.dll")]
         public static extern IntPtr SendMessage(

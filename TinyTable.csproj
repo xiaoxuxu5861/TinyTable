@@ -44,6 +44,7 @@
     <Compile Include="src\QuickSelectionDialog.cs" />
     <Compile Include="src\AutomationSettingsDialog.cs" />
     <Compile Include="src\StartupService.cs" />
+    <Compile Include="src\BrowserUploadShortcutManager.cs" />
     <Compile Include="src\Localization.cs" />
     <Compile Include="src\MainForm.cs" />
     <Compile Include="src\Program.cs" />

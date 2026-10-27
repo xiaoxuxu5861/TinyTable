@@ -25,6 +25,7 @@ namespace TinyTable
         private readonly bool _startedByWindows;
         private readonly System.Windows.Forms.Timer _autoSaveTimer;
         private readonly System.Windows.Forms.Timer _listReloadTimer;
+        private readonly BrowserUploadShortcutManager _browserUploadShortcuts;
         private NotifyIcon _trayIcon;
         private List<DesktopIcon> _icons;
         private bool _refreshingChecks;
@@ -39,6 +40,9 @@ namespace TinyTable
             _startedByWindows = startedByWindows;
             _desktop = new DesktopIconService();
             _store = new SnapshotStore();
+            _browserUploadShortcuts = new BrowserUploadShortcutManager(
+                _store.DataFolder);
+            _browserUploadShortcuts.RecoverAtStartup();
             _selectionList = new SelectionListService();
             _database = _store.Load();
             if (_database.DisplaySortMode == DesktopListSortMode.Date)
@@ -614,6 +618,8 @@ namespace TinyTable
                 _autoSaveTimer.Start();
             }
             ConfigureTray();
+            _browserUploadShortcuts.Configure(
+                settings.ShelterShortcutsDuringBrowserUpload);
         }
 
         private void ConfigureTray()
@@ -1770,6 +1776,8 @@ namespace TinyTable
                     _autoSaveTimer.Dispose();
                 if (_listReloadTimer != null)
                     _listReloadTimer.Dispose();
+                if (_browserUploadShortcuts != null)
+                    _browserUploadShortcuts.Dispose();
                 if (_trayIcon != null)
                 {
                     _trayIcon.Visible = false;

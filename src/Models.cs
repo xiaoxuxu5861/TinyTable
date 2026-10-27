@@ -140,6 +140,7 @@ namespace TinyTable
         [DataMember] public bool RestoreOnSessionUnlock { get; set; }
         [DataMember] public bool DisableAutoArrangeOnStart { get; set; }
         [DataMember] public bool DisableAutoArrangeBeforeRestore { get; set; }
+        [DataMember] public bool ShelterShortcutsDuringBrowserUpload { get; set; }
         [DataMember] public SnapshotNamingMode NamingMode { get; set; }
         [DataMember] public string CustomNamePrefix { get; set; }
         [DataMember] public bool SaveWindowPosition { get; set; }
@@ -170,6 +171,7 @@ namespace TinyTable
                 RestoreOnSessionUnlock = false,
                 DisableAutoArrangeOnStart = false,
                 DisableAutoArrangeBeforeRestore = true,
+                ShelterShortcutsDuringBrowserUpload = false,
                 NamingMode = SnapshotNamingMode.Resolution,
                 CustomNamePrefix = "TinyTable",
                 SaveWindowPosition = true,

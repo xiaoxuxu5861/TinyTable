@@ -176,6 +176,12 @@ namespace TinyTable
             Add("登录 Windows 后自动启动 TinyTable", "Start TinyTable after Windows sign-in", "登入 Windows 後自動啟動 TinyTable");
             Add("启动后直接隐藏到托盘", "Start hidden in the tray", "啟動後直接隱藏到系統匣");
             Add("记住主窗口位置和大小", "Remember main window position and size", "記住主視窗位置和大小");
+            Add("浏览器选择上传文件时临时收纳桌面快捷方式",
+                "Temporarily shelter desktop shortcuts while a browser file picker is open",
+                "瀏覽器選擇上傳檔案時暫時收納桌面捷徑");
+            Add("实验：需关闭自动排列并保持 TinyTable 运行；选择窗口关闭后自动归还。",
+                "Experimental: disable auto-arrange and keep TinyTable running; shortcuts return when the picker closes.",
+                "實驗：需關閉自動排列並保持 TinyTable 執行；選擇視窗關閉後自動歸還。");
             Add("关闭托盘功能时，“最小化到托盘”和“关闭到托盘”不会生效。",
                 "Minimize-to-tray and close-to-tray require the system tray icon.",
                 "關閉系統匣功能時，「最小化到系統匣」與「關閉到系統匣」不會生效。");

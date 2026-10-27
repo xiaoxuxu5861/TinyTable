@@ -14,6 +14,11 @@ namespace TinyTable
         private readonly object _sync = new object();
         private const string DatabaseMutexName = @"Local\TinyTable.DatabaseWrite";
 
+        public string DataFolder
+        {
+            get { return _folder; }
+        }
+
         public SnapshotStore()
         {
             string executableFolder = Path.GetDirectoryName(
